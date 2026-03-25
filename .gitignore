@@ -1,0 +1,31 @@
+# Credentials — never commit these
+.env
+dashboard/.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Local temp audio/transcript files
+recordings/
+transcripts/
+
+# Logs
+*.log
+
+# Node / Next.js
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+
+# OS
+.DS_Store
+Thumbs.db

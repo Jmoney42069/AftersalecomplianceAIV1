@@ -2,10 +2,12 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
-
 # Paths
 BASE_DIR = Path(__file__).parent
+
+# Absolute path to .env: load_dotenv() with no argument searches from cwd,
+# which under Task Scheduler is System32 — the .env file will never be found.
+load_dotenv(BASE_DIR / ".env")
 RECORDINGS_DIR = BASE_DIR / "recordings"
 TRANSCRIPTS_DIR = BASE_DIR / "transcripts"
 
@@ -19,7 +21,7 @@ FRAME_DURATION_MS = 30
 
 # Call detection
 SILENCE_TIMEOUT_SEC = 30
-MIN_CALL_DURATION_SEC = 10
+MIN_CALL_DURATION_SEC = 300  # 5 minutes minimum
 MAX_CALL_DURATION_SEC = 60 * 90  # 90 minutes hard cap
 
 # Whisper

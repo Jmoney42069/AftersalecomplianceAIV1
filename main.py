@@ -9,19 +9,28 @@ from emailer import send_report
 from recorder import CallRecorder
 from storage import save_call, update_compliance, upload_audio
 from transcriber import transcribe
-from config import MIN_CALL_DURATION_SEC, SILENCE_TIMEOUT_SEC
+from config import BASE_DIR, MIN_CALL_DURATION_SEC, SILENCE_TIMEOUT_SEC
 
 AGENT_ID = socket.gethostname()
 
 # ── Logging ────────────────────────────────────────────────────────────────────
 
+# Absolute path: Task Scheduler's working directory is not the project folder,
+# so a relative path would write the log to System32 (or fail entirely).
+_log_path = BASE_DIR / "compliance.log"
+
+_handlers: list[logging.Handler] = [
+    logging.FileHandler(_log_path, encoding="utf-8"),
+]
+# sys.stdout is None under pythonw.exe (no console window).
+# Adding a StreamHandler when stdout is None raises AttributeError on startup.
+if sys.stdout is not None:
+    _handlers.append(logging.StreamHandler(sys.stdout))
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("compliance.log", encoding="utf-8"),
-        logging.StreamHandler(sys.stdout),
-    ],
+    handlers=_handlers,
 )
 
 logger = logging.getLogger(__name__)

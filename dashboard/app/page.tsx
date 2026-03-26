@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabase, type Call } from '@/lib/supabase'
+import Refresher from '@/components/Refresher'
 
 function formatTimestamp(ts: string): string {
   // ts format: "20250325_143022"
@@ -63,6 +64,7 @@ export default async function OverviewPage() {
 
   return (
     <div className="p-8">
+      <Refresher intervalMs={30000} />
       <h2 className="text-xl font-bold text-gray-900 mb-6">Gesprekken overzicht</h2>
 
       {/* Stats bar */}

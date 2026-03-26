@@ -7,9 +7,19 @@ Started automatically by Task Scheduler on login (via pythonw.exe, silent).
 import logging
 import os
 import socket
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+
+# ── Auto-install missing packages ─────────────────────────────────────────────
+_req_file = Path(__file__).parent / "requirements_agent.txt"
+if _req_file.exists():
+    _python = sys.executable if "python.exe" in sys.executable.lower() else str(Path(sys.executable).parent / "python.exe")
+    subprocess.run(
+        [_python, "-m", "pip", "install", "-r", str(_req_file), "--quiet"],
+        check=False,
+    )
 
 from dotenv import load_dotenv
 

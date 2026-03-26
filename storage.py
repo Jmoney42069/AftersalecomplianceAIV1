@@ -79,6 +79,10 @@ def update_compliance(call_id: str, report: dict) -> bool:
     Returns True on success, False on failure."""
     algemeen_oordeel = report.get("algemeen_oordeel", "ONBEKEND")
 
+    # Map any error/unknown value to a valid DB enum value
+    VALID_RISK_LEVELS = {"GOEDGEKEURD", "AFGEKEURD", "ONBEKEND"}
+    risk_level = algemeen_oordeel if algemeen_oordeel in VALID_RISK_LEVELS else "ONBEKEND"
+
     issues = {
         "productcombinatie": report.get("productcombinatie"),
         "prijs_en_voorwaarden": report.get("prijs_en_voorwaarden"),
@@ -89,7 +93,7 @@ def update_compliance(call_id: str, report: dict) -> bool:
 
     update = {
         "compliant": algemeen_oordeel == "GOEDGEKEURD",
-        "risk_level": algemeen_oordeel,
+        "risk_level": risk_level,
         "summary": report.get("samenvatting"),
         "issues": issues,
         "compliance_report": report,

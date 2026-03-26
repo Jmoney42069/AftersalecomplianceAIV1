@@ -1,0 +1,29 @@
+"""
+config.py — Agent-side configuration (stripped version)
+Only contains what the agent PC needs: audio settings + server URL.
+No Whisper, no Supabase, no AI keys.
+"""
+
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Paths
+BASE_DIR = Path(__file__).parent
+load_dotenv(BASE_DIR / ".env")
+
+RECORDINGS_DIR = BASE_DIR / "recordings"
+RECORDINGS_DIR.mkdir(exist_ok=True)
+
+# Audio
+SAMPLE_RATE = 16000
+CHANNELS = 1
+FRAME_DURATION_MS = 30
+
+# Call detection
+SILENCE_TIMEOUT_SEC = 30
+MIN_CALL_DURATION_SEC = 10    # 10 seconden voor testing (zet terug naar 300 voor productie)
+MAX_CALL_DURATION_SEC = 60 * 90  # 90 minutes hard cap
+
+# Server
+SERVER_URL = os.getenv("SERVER_URL", "http://localhost:5000")

@@ -42,36 +42,26 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
   )
 }
 
-export default function RealtimeCalls({ initial }: { initial: Call[] }) {
+export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]; filterRisk?: string }) {
   const [calls, setCalls] = useState<Call[]>(initial)
 
-  useEffect(() => {
-    // Initial fetch to make sure we're fully up to date
-    supabase
-      .from('calls')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => { if (data) setCalls(data as Call[]) })
+  const fetchCalls = () => {
+    let q = supabase.from('calls').select('*').order('created_at', { ascending: false })
+    if (filterRisk) q = q.eq('risk_level', filterRisk)
+    q.then(({ data }) => { if (data) setCalls(data as Call[]) })
+  }
 
-    // Subscribe to all changes on the calls table
+  useEffect(() => {
+    fetchCalls()
+
     const channel = supabase
-      .channel('calls-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'calls' },
-        () => {
-          // Re-fetch on any change
-          supabase
-            .from('calls')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .then(({ data }) => { if (data) setCalls(data as Call[]) })
-        }
-      )
+      .channel('calls-realtime-' + (filterRisk ?? 'all'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, fetchCalls)
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterRisk])
 
   const total = calls.length
   const goedgekeurd = calls.filter(c => c.risk_level === 'GOEDGEKEURD').length

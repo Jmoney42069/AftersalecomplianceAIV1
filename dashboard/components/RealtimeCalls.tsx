@@ -1,18 +1,18 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase, type Call } from '@/lib/supabase'
 
 function formatTimestamp(ts: string): string {
-  if (!ts || ts.length < 15) return ts ?? 'â€”'
+  if (!ts || ts.length < 15) return ts ?? '—'
   const d = `${ts.slice(6, 8)}-${ts.slice(4, 6)}-${ts.slice(0, 4)}`
   const t = `${ts.slice(9, 11)}:${ts.slice(11, 13)}:${ts.slice(13, 15)}`
   return `${d} ${t}`
 }
 
 function formatDuration(seconds: number | null): string {
-  if (!seconds) return 'â€”'
+  if (!seconds) return '—'
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
@@ -38,7 +38,7 @@ function RiskBadge({ level }: { level: string | null }) {
       fontSize: 11, fontWeight: 700, background: s.bg, color: s.color,
       textTransform: 'uppercase', letterSpacing: '0.04em',
     }}>
-      {level ?? 'â€”'}
+      {level ?? '—'}
     </span>
   )
 }
@@ -179,7 +179,7 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
   const goedgekeurd = filtered.filter(c => c.risk_level === 'GOEDGEKEURD').length
   const afgekeurd   = filtered.filter(c => c.risk_level === 'AFGEKEURD').length
   const risico      = filtered.filter(c => c.risk_level === 'RISICO').length
-  const pct = (n: number) => total > 0 ? `${Math.round((n / total) * 100)}%` : 'â€”'
+  const pct = (n: number) => total > 0 ? `${Math.round((n / total) * 100)}%` : '—'
   const pctNum = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0
 
   const handleSort = (key: SortKey) => {
@@ -190,7 +190,7 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
 
   const SortArrow = ({ k }: { k: SortKey }) => (
     <span style={{ marginLeft: 4, color: sortKey === k ? '#6366f1' : '#d1d5db', fontSize: 10 }}>
-      {sortKey === k ? (sortDir === 'asc' ? 'â–²' : 'â–¼') : 'â‡…'}
+      {sortKey === k ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
     </span>
   )
 
@@ -249,7 +249,7 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
           onClick={() => exportCSV(filtered)}
           style={{ padding: '8px 14px', fontSize: 13, fontWeight: 500, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer', color: '#374151', whiteSpace: 'nowrap' }}
         >
-          â†“ CSV
+          ↓ CSV
         </button>
         <LiveDot />
       </div>
@@ -258,14 +258,14 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
       {total > 0 && (
         <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 10 }}>
           {total} gesprek{total !== 1 ? 'ken' : ''} weergegeven
-          {(search || agentFilter || dateFilter !== 'all') && ` â€” filter actief`}
+          {(search || agentFilter || dateFilter !== 'all') && ` — filter actief`}
         </p>
       )}
 
       {/* Table */}
       {total === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 24px', color: '#9ca3af' }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>ðŸ”</div>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>�?</div>
           <p style={{ fontSize: 15, fontWeight: 500, color: '#6b7280', margin: '0 0 4px' }}>Geen gesprekken gevonden</p>
           <p style={{ fontSize: 13, margin: 0 }}>Pas de filters aan of wacht op nieuwe opnames</p>
         </div>
@@ -329,18 +329,18 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
                           }}
                           title="Filter op deze agent"
                         >
-                          {(call as any).agent_id ?? 'â€”'}
+                          {(call as any).agent_id ?? '—'}
                         </button>
                       </td>
                       <td style={{ padding: '10px 16px' }}>
                         <RiskBadge level={call.risk_level} />
                       </td>
                       <td style={{ padding: '10px 16px', color: '#6b7280', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {(call as any).compliance_report?.samenvatting ?? call.summary ?? 'â€”'}
+                        {(call as any).compliance_report?.samenvatting ?? call.summary ?? '—'}
                       </td>
                       <td style={{ padding: '10px 16px', textAlign: 'right' }}>
                         <Link href={`/calls/${call.id}`} style={{ fontSize: 12, color: '#2563eb', textDecoration: 'none', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                          Bekijk â†’
+                          Bekijk →
                         </Link>
                       </td>
                     </tr>

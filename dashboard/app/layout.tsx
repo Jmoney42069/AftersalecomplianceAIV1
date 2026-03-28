@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import LogoutButton from '@/components/LogoutButton'
 
 export const metadata: Metadata = {
   title: 'Voltera Compliance Dashboard',
@@ -28,8 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </a>
           </nav>
 
-          <div className="px-5 py-4 border-t border-gray-700">
+          <div className="px-5 py-4 border-t border-gray-700 space-y-2">
             <p className="text-xs text-gray-500">Demo versie · 2026</p>
+            <LogoutButton />
           </div>
         </aside>
 

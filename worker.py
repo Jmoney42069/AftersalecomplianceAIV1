@@ -160,22 +160,11 @@ def process_call(item: dict) -> None:
             # Still attempt to save partial result — don't discard the transcript
             # Fall through to storage so the call is at least visible in the dashboard
 
-        # ── Step 3: Upload audio ───────────────────────────────────────────────
-        try:
-            file_url = upload_audio(processing_path)
-        except Exception:
-            logger.exception("[%s] Audio upload raised an exception", agent_id)
-            _move(processing_path, FAILED_DIR)
-            return
-
-        if not file_url:
-            logger.warning("[%s] Audio upload returned None — moving to failed", agent_id)
-            _move(processing_path, FAILED_DIR)
-            return
-
-        # upload_audio() already deleted the local file on success.
-        # Nothing to move — file now lives in Supabase Storage.
-        logger.debug("[%s] Local file removed by upload_audio — continuing pipeline", agent_id)
+        # ── Step 3: Audio opslag — alleen lokaal, niet naar Supabase ─────────────
+        file_url = None  # audio wordt niet geüpload naar Supabase
+        logger.info("[%s] Audio bewaard lokaal: %s", agent_id, processing_path)
+        # Verplaats terug naar uploads/ zodat processing/ leeg blijft
+        _move(processing_path, UPLOADS_DIR)
 
         # ── Step 4: Save call row ──────────────────────────────────────────────
         try:

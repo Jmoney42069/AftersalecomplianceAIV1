@@ -80,7 +80,7 @@ def update_compliance(call_id: str, report: dict) -> bool:
     algemeen_oordeel = report.get("algemeen_oordeel", "ONBEKEND")
 
     # Map any error/unknown value to a valid DB enum value
-    VALID_RISK_LEVELS = {"GOEDGEKEURD", "AFGEKEURD", "ONBEKEND"}
+    VALID_RISK_LEVELS = {"GOEDGEKEURD", "AFGEKEURD", "ONBEKEND", "RISICO"}
     risk_level = algemeen_oordeel if algemeen_oordeel in VALID_RISK_LEVELS else "ONBEKEND"
 
     issues = {

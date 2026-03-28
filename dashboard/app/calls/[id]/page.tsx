@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { supabase, type Call, type CheckField, type ComplianceReport } from '@/lib/supabase'
+import DeleteButton from '@/components/DeleteButton'
 
 function formatTimestamp(ts: string): string {
   if (!ts || ts.length < 15) return ts ?? '—'
@@ -123,6 +124,7 @@ export default async function CallDetailPage({
           </p>
         </div>
         <RiskBadge level={call.risk_level} />
+        <DeleteButton callId={call.id} />
       </div>
 
       {/* Samenvatting */}

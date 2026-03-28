@@ -5,75 +5,65 @@ import Link from 'next/link'
 import LogoutButton from './LogoutButton'
 
 const NAV = [
-  { href: '/',            label: 'Overzicht',   icon: '▤'  },
-  { href: '/afgekeurd',   label: 'Afgekeurd',   icon: '✕'  },
-  { href: '/risico',      label: 'Risico',      icon: '⚠'  },
-  { href: '/goedgekeurd', label: 'Goedgekeurd', icon: '✓'  },
+  { href: '/',            label: 'Alle gesprekken' },
+  { href: '/afgekeurd',   label: 'Afgekeurd'       },
+  { href: '/risico',      label: 'Risico'          },
+  { href: '/goedgekeurd', label: 'Goedgekeurd'     },
 ]
 
 export default function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  if (pathname === '/login') {
-    return <>{children}</>
-  }
+  if (pathname === '/login') return <>{children}</>
 
   return (
-    <div className="flex h-screen bg-gray-100 text-gray-900 antialiased">
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f9fafb' }}>
 
-      {/* ── Sidebar ───────────────────────────────────────────── */}
-      <aside className="w-56 shrink-0 bg-[#0f1117] flex flex-col border-r border-white/5">
+      <aside style={{
+        width: 220,
+        flexShrink: 0,
+        background: '#ffffff',
+        borderRight: '1px solid #e5e7eb',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+      }}>
 
-        {/* Brand */}
-        <div className="flex items-center gap-3 px-5 h-16 border-b border-white/5">
-          <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center shrink-0">
-            <span className="text-white text-xs font-bold">V</span>
-          </div>
-          <div>
-            <p className="text-white text-sm font-semibold leading-none">Voltera</p>
-            <p className="text-gray-500 text-[11px] leading-none mt-0.5">Compliance</p>
-          </div>
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #f3f4f6' }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>Voltera</div>
+          <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>Compliance dashboard</div>
         </div>
 
-        {/* Nav links */}
-        <nav className="flex-1 px-3 pt-4 pb-2 flex flex-col gap-0.5">
-          <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest px-2 mb-2">
-            Navigatie
-          </p>
-          {NAV.map(({ href, label, icon }) => {
+        <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {NAV.map(({ href, label }) => {
             const active = pathname === href
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all ${
-                  active
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-100'
-                }`}
+                style={{
+                  display: 'block',
+                  padding: '8px 12px',
+                  borderRadius: 6,
+                  fontSize: 14,
+                  fontWeight: active ? 500 : 400,
+                  color: active ? '#111827' : '#6b7280',
+                  background: active ? '#f3f4f6' : 'transparent',
+                  textDecoration: 'none',
+                }}
               >
-                <span
-                  className={`w-5 h-5 flex items-center justify-center text-sm rounded ${
-                    active ? 'text-white' : 'text-gray-500'
-                  }`}
-                >
-                  {icon}
-                </span>
                 {label}
               </Link>
             )
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="px-4 py-4 border-t border-white/5">
+        <div style={{ padding: '12px 20px 20px', borderTop: '1px solid #f3f4f6' }}>
           <LogoutButton />
-          <p className="text-[10px] text-gray-700 mt-2">v1.0 · 2026</p>
         </div>
       </aside>
 
-      {/* ── Main content ──────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto">
+      <main style={{ flex: 1, overflowY: 'auto', background: '#f9fafb' }}>
         {children}
       </main>
     </div>

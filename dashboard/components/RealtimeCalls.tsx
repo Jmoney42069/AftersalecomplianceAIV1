@@ -68,11 +68,6 @@ function StatCard({ label, value, sub, accent, bar }: {
       <p style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, margin: '0 0 4px' }}>{label}</p>
       <p style={{ fontSize: 26, fontWeight: 700, color: '#111827', margin: '0 0 2px' }}>{value}</p>
       {sub && <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>{sub}</p>}
-      {bar !== undefined && bar >= 0 && (
-        <div style={{ marginTop: 10, height: 3, background: '#f3f4f6', borderRadius: 2 }}>
-          <div style={{ height: '100%', width: `${Math.min(bar, 100)}%`, background: accent ?? '#6366f1', borderRadius: 2, transition: 'width .4s' }} />
-        </div>
-      )}
     </div>
   )
 }
@@ -197,11 +192,7 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
   const paginated = filtered.slice(0, page * PAGE_SIZE)
   const hasMore = filtered.length > page * PAGE_SIZE
 
-  const rowBg: Record<string, string> = {
-    GOEDGEKEURD: '#f0fdf4',
-    RISICO:      '#fff7ed',
-    AFGEKEURD:   '#fff1f2',
-  }
+
 
   return (
     <>
@@ -300,9 +291,7 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
               </thead>
               <tbody>
                 {paginated.map((call, i) => {
-                  const bg = hoveredRow === call.id
-                    ? '#f0f9ff'
-                    : (rowBg[call.risk_level ?? ''] ?? '#fff')
+                  const bg = hoveredRow === call.id ? '#f0f9ff' : '#fff'
                   return (
                     <tr
                       key={call.id}

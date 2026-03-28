@@ -17,6 +17,10 @@ venv/
 # Local temp audio/transcript files
 recordings/
 transcripts/
+uploads/
+*.wav
+*.mp3
+*.ogg
 
 # Logs
 *.log

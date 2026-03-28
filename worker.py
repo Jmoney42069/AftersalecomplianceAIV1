@@ -7,6 +7,7 @@ Import from server.py and call start_workers() after Flask app is created:
     import worker; worker.start_workers()
 """
 
+import json
 import logging
 import shutil
 import threading
@@ -38,6 +39,7 @@ logger = logging.getLogger(__name__)
 # ── Config ─────────────────────────────────────────────────────────────────────
 
 NUM_WORKERS = 2  # concurrent Whisper threads — raise only if RAM allows
+MAX_RETRIES = 3  # max times a crashed file is re-queued before giving up
 
 BASE_DIR = Path(__file__).parent
 UPLOADS_DIR = BASE_DIR / "uploads"
@@ -91,15 +93,39 @@ def _recover_stuck_files() -> None:
 
     logger.warning("Startup recovery: %d file(s) stuck in processing/ — re-queuing", len(stuck))
     for wav in stuck:
+        # Read sidecar JSON for original metadata + retry count
+        json_path = wav.with_suffix('.json')
+        meta: dict = {}
+        if json_path.exists():
+            try:
+                meta = json.loads(json_path.read_text(encoding='utf-8'))
+            except Exception:
+                pass
+
+        retries = meta.get('retries', 0) + 1
+        if retries > MAX_RETRIES:
+            logger.error("Recovery: %s exceeded max retries (%d) — moving to failed/", wav.name, MAX_RETRIES)
+            _move(wav, FAILED_DIR)
+            json_path.unlink(missing_ok=True)
+            continue
+
+        # Update retry count in sidecar
+        meta['retries'] = retries
+        if json_path.exists():
+            try:
+                json_path.write_text(json.dumps(meta), encoding='utf-8')
+            except Exception:
+                pass
+
         recovered = _move(wav, PENDING_DIR)
-        # Re-queue with minimal metadata (agent_id/duration unknown after crash)
         _queue().put({
             "wav_path": str(recovered),
-            "agent_id": "recovered",
-            "duration": 0.0,
-            "timestamp": wav.stem,  # best guess from filename
+            "agent_id": meta.get('agent_id', 'recovered'),
+            "duration": meta.get('duration', 0.0),
+            "timestamp": meta.get('timestamp', wav.stem),
+            "retries": retries,
         })
-        logger.info("Re-queued recovered file: %s", recovered.name)
+        logger.info("Re-queued recovered file (attempt %d/%d): %s", retries, MAX_RETRIES, recovered.name)
 
 
 # ── Pipeline ───────────────────────────────────────────────────────────────────
@@ -203,14 +229,15 @@ def process_call(item: dict) -> None:
 
     except Exception:
         logger.exception("[%s] Unhandled error in process_call", agent_id)
-        # Move to failed/ only if the file still exists on disk.
-        # After upload_audio() succeeds the file is gone — nothing to move.
         if processing_path.exists():
             _move(processing_path, FAILED_DIR)
         else:
             logger.info("[%s] File already uploaded — no local file to move to failed/", agent_id)
 
     finally:
+        # Clean up sidecar JSON
+        for candidate in (Path(item["wav_path"]).with_suffix('.json'),):
+            candidate.unlink(missing_ok=True)
         _decrement_workers()
         _queue().task_done()
 

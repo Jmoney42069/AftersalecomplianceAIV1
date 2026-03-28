@@ -8,6 +8,7 @@ Run on the central (always-on) office PC:
 Agent PCs POST to: http://<SERVER_IP>:5000/upload
 """
 
+import json
 import logging
 import sys
 import threading
@@ -144,12 +145,22 @@ def upload():
         tmp_path.rename(wav_path)
         tmp_path = None  # prevent cleanup in finally block
 
+        # 6b. Write sidecar JSON for crash-safe metadata recovery
+        json_path = wav_path.with_suffix('.json')
+        json_path.write_text(json.dumps({
+            "agent_id": agent_id,
+            "duration": duration,
+            "timestamp": timestamp_str,
+            "retries": 0,
+        }), encoding="utf-8")
+
         # 7. Queue for worker
         job = {
             "wav_path": str(wav_path),
             "agent_id": agent_id,
             "duration": duration,
             "timestamp": timestamp_str,
+            "retries": 0,
         }
         upload_queue.put(job)
 

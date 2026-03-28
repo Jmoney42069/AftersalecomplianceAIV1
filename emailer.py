@@ -12,7 +12,8 @@ SMTP_PORT = 465
 
 
 def _subject(oordeel: str, timestamp: str) -> str:
-    prefix = "❌ AFGEKEURD" if oordeel == "AFGEKEURD" else "⚠️ RISICO"
+    icons = {"AFGEKEURD": "❌ AFGEKEURD", "RISICO": "⚠️ RISICO", "GOEDGEKEURD": "✅ GOEDGEKEURD"}
+    prefix = icons.get(oordeel, oordeel)
     return f"{prefix} — Gesprek {timestamp}"
 
 
@@ -68,7 +69,8 @@ def _build_html(timestamp: str, transcript: str, report: dict) -> str:
     pv = report.get("prijs_en_voorwaarden", {})
     ak = report.get("akkoord_klant", {})
 
-    oordeel_color = "#c0392b" if oordeel == "AFGEKEURD" else "#e67e22"
+    colors = {"AFGEKEURD": "#c0392b", "RISICO": "#e67e22", "GOEDGEKEURD": "#27ae60"}
+    oordeel_color = colors.get(oordeel, "#333")
 
     rows = "\n".join([
         _check_row("Productcombinatie", pc.get("voldaan", False), pc.get("toelichting", "—")),
@@ -118,14 +120,10 @@ def _build_html(timestamp: str, transcript: str, report: dict) -> str:
 
 
 def send_report(timestamp: str, transcript: str, report: dict) -> None:
-    """Send compliance email for RISICO or AFGEKEURD calls. No-op for GOEDGEKEURD."""
+    """Send compliance email for all calls (GOEDGEKEURD, RISICO, AFGEKEURD)."""
     oordeel = report.get("algemeen_oordeel")
 
-    if oordeel == "GOEDGEKEURD":
-        logger.info("Oordeel GOEDGEKEURD — no email needed for %s", timestamp)
-        return
-
-    if oordeel not in ("RISICO", "AFGEKEURD"):
+    if oordeel not in ("GOEDGEKEURD", "RISICO", "AFGEKEURD"):
         logger.warning("Unexpected oordeel '%s' — sending email anyway", oordeel)
 
     try:

@@ -9,7 +9,6 @@ const NAV = [
   { href: '/afgekeurd',   label: 'Afgekeurd'       },
   { href: '/risico',      label: 'Risico'          },
   { href: '/goedgekeurd', label: 'Goedgekeurd'     },
-  { href: '/schaalplan',  label: 'Schaalplan CB'   },
 ]
 
 export default function ConditionalLayout({ children }: { children: React.ReactNode }) {

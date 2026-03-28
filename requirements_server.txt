@@ -1,0 +1,7 @@
+flask>=3.0
+python-dotenv>=1.0
+faster-whisper>=1.2
+groq>=0.9
+anthropic>=0.86
+supabase>=2.0
+requests>=2.0

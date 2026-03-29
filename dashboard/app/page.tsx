@@ -1,7 +1,9 @@
+import { unstable_noStore as noStore } from 'next/cache'
 import { supabase, type Call } from '@/lib/supabase'
 import RealtimeCalls from '@/components/RealtimeCalls'
 
 export default async function OverviewPage() {
+  noStore()
   const { data: calls, error } = await supabase
     .from('calls')
     .select('*')

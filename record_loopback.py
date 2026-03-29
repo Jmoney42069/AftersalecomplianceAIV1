@@ -15,6 +15,7 @@ import argparse
 import os
 import subprocess
 import sys
+import threading
 import wave
 import tempfile
 from datetime import datetime
@@ -98,6 +99,8 @@ def record_loopback(device_index: int | None = None) -> tuple[Path, float]:
     print("Druk op Ctrl+C om de opname te stoppen en te uploaden.\n")
 
     frames = []
+    stop_event = threading.Event()
+
     stream = p.open(
         format=pyaudio.paInt16,
         channels=channels,
@@ -107,12 +110,24 @@ def record_loopback(device_index: int | None = None) -> tuple[Path, float]:
         input_device_index=device["index"],
     )
 
+    def _record():
+        while not stop_event.is_set():
+            try:
+                data = stream.read(CHUNK, exception_on_overflow=False)
+                frames.append(data)
+            except Exception:
+                break
+
+    thread = threading.Thread(target=_record, daemon=True)
+    thread.start()
+
     try:
-        while True:
-            data = stream.read(CHUNK, exception_on_overflow=False)
-            frames.append(data)
+        while thread.is_alive():
+            thread.join(timeout=0.1)
     except KeyboardInterrupt:
-        pass
+        print("\nStoppen...")
+        stop_event.set()
+        thread.join(timeout=2)
     finally:
         stream.stop_stream()
         stream.close()

@@ -155,19 +155,88 @@ function CallDetailModal({ call, onClose }: { call: Call; onClose: () => void })
               </div>
             </div>
           )}
-          {extraKeys.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <p style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px', fontWeight: 600 }}>Rapport details</p>
-              <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '12px 16px' }}>
-                {extraKeys.map((k: string) => (
-                  <div key={k} style={{ marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase' }}>{k}: </span>
-                    <span style={{ fontSize: 13, color: '#374151' }}>{typeof report[k] === 'object' ? JSON.stringify(report[k]) : String(report[k])}</span>
-                  </div>
-                ))}
+          {extraKeys.length > 0 && (() => {
+            const labelMap: Record<string, string> = {
+              productcombinatie: 'Productcombinatie',
+              prijs_en_voorwaarden: 'Prijs & Voorwaarden',
+              akkoord_klant: 'Akkoord klant',
+              verboden_claims: 'Verboden claims',
+              rode_vlaggen: 'Rode vlaggen',
+              algemeen_oordeel: 'Oordeel',
+            }
+            const complianceOrder = ['productcombinatie','prijs_en_voorwaarden','akkoord_klant','verboden_claims','rode_vlaggen','algemeen_oordeel']
+            const sorted = [...extraKeys].sort((a, b) => {
+              const ai = complianceOrder.indexOf(a), bi = complianceOrder.indexOf(b)
+              if (ai === -1 && bi === -1) return 0
+              if (ai === -1) return 1
+              if (bi === -1) return -1
+              return ai - bi
+            })
+            return (
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px', fontWeight: 600 }}>Compliance controle</p>
+                <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+                  {sorted.map((k: string, i: number) => {
+                    const val = report[k]
+                    const label = labelMap[k] ?? k.replace(/_/g, ' ')
+                    const isLast = i === sorted.length - 1
+                    const rowStyle: React.CSSProperties = {
+                      display: 'flex', alignItems: 'flex-start', gap: 10,
+                      padding: '10px 14px',
+                      borderBottom: isLast ? undefined : '1px solid #f3f4f6',
+                      background: '#fff',
+                    }
+
+                    if (k === 'algemeen_oordeel') {
+                      return (
+                        <div key={k} style={{ ...rowStyle, alignItems: 'center' }}>
+                          <span style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', fontWeight: 700, minWidth: 140 }}>{label}</span>
+                          <RiskBadge level={String(val)} />
+                        </div>
+                      )
+                    }
+
+                    if (val && typeof val === 'object' && 'voldaan' in val) {
+                      const passed = (val as any).voldaan === true
+                      const toel: string = (val as any).toelichting ?? ''
+                      return (
+                        <div key={k} style={{ ...rowStyle, background: passed ? '#fff' : '#fef2f2' }}>
+                          <span style={{ fontSize: 15, marginTop: 1, flexShrink: 0 }}>{passed ? '✅' : '❌'}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>{label}</span>
+                            {toel && <p style={{ fontSize: 12, color: '#6b7280', margin: '3px 0 0', lineHeight: 1.5 }}>{toel}</p>}
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    if (val && typeof val === 'object' && 'gevonden' in val) {
+                      const gevonden = (val as any).gevonden === true
+                      const items: string[] = (val as any).details ?? (val as any).claims ?? []
+                      return (
+                        <div key={k} style={{ ...rowStyle, background: gevonden ? '#fffbeb' : '#fff' }}>
+                          <span style={{ fontSize: 15, marginTop: 1, flexShrink: 0 }}>{gevonden ? '⚠️' : '✅'}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>{label}</span>
+                            <p style={{ fontSize: 12, color: '#6b7280', margin: '3px 0 0', lineHeight: 1.5 }}>
+                              {items.length > 0 ? items.join(' · ') : 'Geen gevonden'}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <div key={k} style={rowStyle}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', minWidth: 140 }}>{label}</span>
+                        <span style={{ fontSize: 13, color: '#374151' }}>{String(val)}</span>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
           <Link href={`/calls/${call.id}`} style={{ display: 'inline-block', padding: '9px 20px', background: '#2563eb', color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
             Volledig rapport bekijken →
           </Link>
@@ -361,6 +430,37 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [page, setPage] = useState(1)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
+
+  const toggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paginated.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(paginated.map(c => c.id)))
+    }
+  }
+
+  const deleteSelected = async () => {
+    if (selectedIds.size === 0) return
+    if (!window.confirm(`${selectedIds.size} gesprek${selectedIds.size !== 1 ? 'ken' : ''} permanent verwijderen?`)) return
+    setDeleting(true)
+    await supabase.from('calls').delete().in('id', Array.from(selectedIds))
+    setCalls(prev => prev.filter(c => !selectedIds.has(c.id)))
+    setSelectedIds(new Set())
+    setSelectMode(false)
+    setDeleting(false)
+  }
 
   const fetchCalls = () => {
     let q = supabase.from('calls').select('*').order('created_at', { ascending: false })
@@ -500,6 +600,19 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
                 style={{ padding: '8px 14px', fontSize: 13, fontWeight: 500, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, cursor: 'pointer', color: '#374151', whiteSpace: 'nowrap' }}>
                 ↓ CSV
               </button>
+              <button
+                onClick={() => { setSelectMode(s => !s); setSelectedIds(new Set()) }}
+                style={{ padding: '8px 14px', fontSize: 13, fontWeight: 500, background: selectMode ? '#f3f4f6' : '#fff', border: `1px solid ${selectMode ? '#6b7280' : '#e5e7eb'}`, borderRadius: 8, cursor: 'pointer', color: selectMode ? '#111827' : '#374151', whiteSpace: 'nowrap' }}>
+                {selectMode ? '✕ Annuleer' : '☑ Selecteren'}
+              </button>
+              {selectMode && (
+                <button
+                  onClick={deleteSelected}
+                  disabled={selectedIds.size === 0 || deleting}
+                  style={{ padding: '8px 14px', fontSize: 13, fontWeight: 600, background: selectedIds.size > 0 ? '#dc2626' : '#f3f4f6', border: 'none', borderRadius: 8, cursor: selectedIds.size > 0 ? 'pointer' : 'default', color: selectedIds.size > 0 ? '#fff' : '#9ca3af', whiteSpace: 'nowrap', transition: 'background .15s' }}>
+                  {deleting ? 'Bezig...' : `🗑 Verwijder${selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}`}
+                </button>
+              )}
               <LiveDot />
             </div>
 
@@ -522,6 +635,16 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
+                        {selectMode && (
+                          <th style={{ padding: '10px 12px 10px 16px', width: 36 }} onClick={toggleSelectAll}>
+                            <input
+                              type="checkbox"
+                              readOnly
+                              checked={paginated.length > 0 && selectedIds.size === paginated.length}
+                              style={{ cursor: 'pointer', width: 15, height: 15 }}
+                            />
+                          </th>
+                        )}
                         {([
                           { key: 'timestamp', label: 'Datum & Tijd' },
                           { key: 'duration',  label: 'Duur' },
@@ -534,20 +657,31 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
                           </th>
                         ))}
                         <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Samenvatting</th>
-                        <th style={{ width: 80 }} />
+                        {!selectMode && <th style={{ width: 80 }} />}
                       </tr>
                     </thead>
                     <tbody>
                       {paginated.map((call, i) => {
-                        const bg = hoveredRow === call.id ? '#f0f9ff' : '#fff'
+                        const isSelected = selectedIds.has(call.id)
+                        const bg = isSelected ? '#eff6ff' : hoveredRow === call.id ? '#f0f9ff' : '#fff'
                         return (
                           <tr
                             key={call.id}
                             onMouseEnter={() => setHoveredRow(call.id)}
                             onMouseLeave={() => setHoveredRow(null)}
-                            onClick={() => setSelectedCall(call)}
+                            onClick={selectMode ? (e) => toggleSelect(call.id, e) : () => setSelectedCall(call)}
                             style={{ borderBottom: i < paginated.length - 1 ? '1px solid #f3f4f6' : undefined, background: bg, transition: 'background .1s', cursor: 'pointer' }}
                           >
+                            {selectMode && (
+                              <td style={{ padding: '10px 12px 10px 16px' }} onClick={e => toggleSelect(call.id, e)}>
+                                <input
+                                  type="checkbox"
+                                  readOnly
+                                  checked={isSelected}
+                                  style={{ cursor: 'pointer', width: 15, height: 15 }}
+                                />
+                              </td>
+                            )}
                             <td style={{ padding: '10px 16px', color: '#374151', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>{formatTimestamp(call.timestamp)}</td>
                             <td style={{ padding: '10px 16px', color: '#6b7280', whiteSpace: 'nowrap' }}>{formatDuration(call.duration)}</td>
                             <td style={{ padding: '10px 16px', color: '#374151', whiteSpace: 'nowrap' }}>{(call as any).agent_id ?? '—'}</td>
@@ -555,11 +689,13 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
                             <td style={{ padding: '10px 16px', color: '#6b7280', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {(call as any).compliance_report?.samenvatting ?? call.summary ?? '—'}
                             </td>
-                            <td style={{ padding: '10px 16px', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
-                              <Link href={`/calls/${call.id}`} style={{ fontSize: 12, color: '#2563eb', textDecoration: 'none', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                                Bekijk →
-                              </Link>
-                            </td>
+                            {!selectMode && (
+                              <td style={{ padding: '10px 16px', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                                <Link href={`/calls/${call.id}`} style={{ fontSize: 12, color: '#2563eb', textDecoration: 'none', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                  Bekijk →
+                                </Link>
+                              </td>
+                            )}
                           </tr>
                         )
                       })}

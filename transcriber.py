@@ -14,7 +14,7 @@ def _get_model() -> WhisperModel:
     global _model
     if _model is None:
         logger.info("Loading Whisper model '%s' (CPU, int8)...", WHISPER_MODEL)
-        _model = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
+        _model = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8", num_workers=2)
         logger.info("Whisper model loaded.")
     return _model
 

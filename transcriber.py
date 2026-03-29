@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 from faster_whisper import WhisperModel
@@ -15,7 +14,7 @@ def _get_model() -> WhisperModel:
     global _model
     if _model is None:
         logger.info("Loading Whisper model '%s' (CPU, int8)...", WHISPER_MODEL)
-        _model = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8", cpu_threads=os.cpu_count() or 4)
+        _model = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
         logger.info("Whisper model loaded.")
     return _model
 

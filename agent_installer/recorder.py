@@ -8,6 +8,7 @@ import sounddevice as sd
 import webrtcvad
 
 from config import (
+    AUDIO_DEVICE,
     CHANNELS,
     FRAME_DURATION_MS,
     MAX_CALL_DURATION_SEC,
@@ -77,14 +78,17 @@ class CallRecorder:
                     )
                     self._finalize_call(on_call_complete)
 
+        device_label = AUDIO_DEVICE if AUDIO_DEVICE else "default mic"
+        logger.info("Audio input: %s", device_label)
         with sd.InputStream(
             samplerate=SAMPLE_RATE,
             channels=CHANNELS,
             dtype="float32",
             blocksize=FRAME_SIZE,
+            device=AUDIO_DEVICE,
             callback=audio_callback,
         ):
-            logger.info("Listening on mic. Press Ctrl+C to stop.")
+            logger.info("Listening on %s. Press Ctrl+C to stop.", device_label)
             threading.Event().wait()
 
     def _finalize_call(self, on_call_complete: callable) -> None:

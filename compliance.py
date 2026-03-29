@@ -111,16 +111,20 @@ def _call_groq(transcript: str) -> dict:
 
     # Groq on-demand TPM limit is 12000. System prompt is ~600 tokens,
     # response needs ~2048. Cap transcript at ~7500 words ≈ 9000 tokens.
+    # Sample begin + midden + einde zodat het hele gesprek gedekt is.
     MAX_WORDS = 7500
     words = transcript.split()
     if len(words) > MAX_WORDS:
-        half = MAX_WORDS // 2
+        third = MAX_WORDS // 3
+        mid_start = len(words) // 2 - third // 2
         transcript = (
-            " ".join(words[:half])
-            + "\n\n[... transcript ingekort vanwege lengte ...]\n\n"
-            + " ".join(words[-half:])
+            " ".join(words[:third])
+            + "\n\n[... transcript ingekort: begin weergegeven ...]\n\n"
+            + " ".join(words[mid_start:mid_start + third])
+            + "\n\n[... transcript ingekort: midden weergegeven ...]\n\n"
+            + " ".join(words[-third:])
         )
-        logger.info("Transcript ingekort naar %d woorden voor Groq API", MAX_WORDS)
+        logger.info("Transcript ingekort naar %d woorden (begin/midden/einde) voor Groq API", MAX_WORDS)
 
     logger.info("Calling Groq (%s)...", GROQ_MODEL)
     client = OpenAI(

@@ -20,6 +20,13 @@ SAMPLE_RATE = 16000
 CHANNELS = 1
 FRAME_DURATION_MS = 30
 
+# Input apparaat — None = standaard microfoon
+# Zet op een naam of index om een ander apparaat te gebruiken, bijv:
+#   AUDIO_DEVICE = "Stereo Mix"
+#   AUDIO_DEVICE = "CABLE Output"
+# Voer 'python -c "import sounddevice as sd; print(sd.query_devices())"' uit om alle apparaten te zien.
+AUDIO_DEVICE = os.getenv("AUDIO_DEVICE") or None
+
 # Call detection
 SILENCE_TIMEOUT_SEC = 30
 MIN_CALL_DURATION_SEC = 300  # minimale gespreksduur in seconden

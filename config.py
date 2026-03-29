@@ -25,7 +25,7 @@ MIN_CALL_DURATION_SEC = 10  # minimale gespreksduur in seconden
 MAX_CALL_DURATION_SEC = 60 * 180  # 180 minutes hard cap
 
 # Whisper
-WHISPER_MODEL = "base"
+WHISPER_MODEL = "medium"
 WHISPER_LANGUAGE = "nl"
 
 # Supabase

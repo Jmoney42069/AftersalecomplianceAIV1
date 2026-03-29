@@ -26,6 +26,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent / ".env")
 SERVER_URL = os.getenv("SERVER_URL", "http://localhost:5000")
+DEFAULT_AGENT_ID = os.getenv("AGENT_ID") or __import__("socket").gethostname()
 
 CHUNK = 1024
 
@@ -211,7 +212,7 @@ def main():
     wav_path, duration = record_loopback(device_index=args.device)
 
     try:
-        upload(wav_path, duration, agent_id=args.agent)
+        upload(wav_path, duration, agent_id=args.agent or DEFAULT_AGENT_ID)
     finally:
         wav_path.unlink(missing_ok=True)
 

@@ -25,7 +25,7 @@ SERVER_URL    = os.getenv("SERVER_URL", "http://localhost:5000")
 PENDING_DIR   = BASE_DIR / "pending_uploads"
 PENDING_DIR.mkdir(exist_ok=True)
 
-AGENT_ID      = socket.gethostname()
+AGENT_ID      = os.getenv("AGENT_ID") or socket.gethostname()
 RETRY_DELAYS  = [0, 60, 120, 300, 600]   # seconds between attempts; last value repeats
 UPLOAD_TIMEOUT = 120                      # seconds — generous for large .wav files
 

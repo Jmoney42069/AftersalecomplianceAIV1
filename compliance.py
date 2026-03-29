@@ -109,10 +109,10 @@ def _call_claude(transcript: str) -> dict:
 def _call_groq(transcript: str) -> dict:
     from openai import OpenAI
 
-    # Groq on-demand TPM limit is 12000. System prompt is ~600 tokens,
-    # response needs ~2048. Cap transcript at ~7500 words ≈ 9000 tokens.
-    # Sample begin + midden + einde zodat het hele gesprek gedekt is.
-    MAX_WORDS = 7500
+    # Groq TPM limit = 12000. Response needs 2048 + system prompt ~600 = 2648 overhead.
+    # Dutch averages ~1.4 tokens/word, so max safe words = (12000-2648)/1.4 = ~6680
+    # Use 5000 to stay well clear of the limit.
+    MAX_WORDS = 5000
     words = transcript.split()
     if len(words) > MAX_WORDS:
         third = MAX_WORDS // 3

@@ -126,6 +126,9 @@ def upload():
         timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_agent_id = "".join(c for c in agent_id if c.isalnum() or c in "-_")[:32]
         base_name = f"{safe_agent_id}_{timestamp_str}"
+        # Voeg microseconds toe als het bestand al bestaat (twee uploads in dezelfde seconde)
+        if (UPLOADS_DIR / f"{base_name}.wav").exists() or (UPLOADS_DIR / f"{base_name}.tmp").exists():
+            base_name = f"{safe_agent_id}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
 
         tmp_path = UPLOADS_DIR / f"{base_name}.tmp"
         wav_path = UPLOADS_DIR / f"{base_name}.wav"

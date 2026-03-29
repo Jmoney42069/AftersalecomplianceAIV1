@@ -2,6 +2,7 @@
 upload_gui.py — Eenvoudige upload GUI voor Voltera Compliance Server
 """
 
+import os
 import socket
 import threading
 import tkinter as tk
@@ -9,8 +10,10 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 import requests
+from dotenv import load_dotenv
 
-AGENT_ID = socket.gethostname()
+load_dotenv(Path(__file__).parent / ".env")
+AGENT_ID = os.getenv("AGENT_ID") or socket.gethostname()
 
 
 class UploadApp(tk.Tk):

@@ -140,6 +140,9 @@ def process_call(item: dict) -> None:
     logger.info("=== Pipeline start: agent=%s ts=%s dur=%.1fs ===", agent_id, timestamp, duration)
 
     processing_path = _move(wav_path, PROCESSING_DIR)
+    if not processing_path.exists():
+        logger.error("[%s] Move naar processing/ mislukt — bestand verdwenen: %s", agent_id, wav_path.name)
+        return
     _increment_workers()
 
     try:

@@ -131,25 +131,3 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
     </div>
   )
 }
-
-                  background: active ? '#f3f4f6' : 'transparent',
-                  textDecoration: 'none',
-                }}
-              >
-                {label}
-              </Link>
-            )
-          })}
-        </nav>
-
-        <div style={{ padding: '12px 20px 20px', borderTop: '1px solid #f3f4f6' }}>
-          <LogoutButton />
-        </div>
-      </aside>
-
-      <main style={{ flex: 1, overflowY: 'auto', background: '#f9fafb' }}>
-        {children}
-      </main>
-    </div>
-  )
-}

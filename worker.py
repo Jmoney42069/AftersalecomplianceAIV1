@@ -154,6 +154,16 @@ def process_call(item: dict) -> None:
         logger.error("[%s] wav file missing before processing: %s", agent_id, wav_path)
         return
 
+    # Als duration 0 is, lees het uit het WAV bestand zelf
+    if duration <= 0:
+        try:
+            import wave as _wave
+            with _wave.open(str(wav_path), "rb") as _wf:
+                duration = _wf.getnframes() / _wf.getframerate()
+            logger.info("[%s] Duration uit WAV bestand gelezen: %.1fs", agent_id, duration)
+        except Exception:
+            logger.warning("[%s] Kon duration niet uit WAV lezen", agent_id)
+
     logger.info("=== Pipeline start: agent=%s ts=%s dur=%.1fs ===", agent_id, timestamp, duration)
 
     processing_path = _move(wav_path, PROCESSING_DIR)

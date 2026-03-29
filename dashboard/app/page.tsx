@@ -18,8 +18,8 @@ export default async function OverviewPage() {
   }
 
   return (
-    <div className="p-8">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Gesprekken overzicht</h2>
+    <div className="p-4 md:p-8">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 md:mb-6">Gesprekken overzicht</h2>
       <RealtimeCalls initial={(calls ?? []) as Call[]} />
     </div>
   )

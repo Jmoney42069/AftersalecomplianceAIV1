@@ -10,6 +10,13 @@ html, body {
   color: #111827;
 }
 
+@media (max-width: 767px) {
+  html, body {
+    height: auto;
+    overflow: auto;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

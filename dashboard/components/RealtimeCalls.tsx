@@ -56,6 +56,18 @@ function LiveDot() {
   )
 }
 
+/* ── useWindowWidth ─────────────────────────────────────────── */
+function useWindowWidth() {
+  const [width, setWidth] = useState(1200)
+  useEffect(() => {
+    setWidth(window.innerWidth)
+    const handler = () => setWidth(window.innerWidth)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return width
+}
+
 /* ── StatCard ────────────────────────────────────────────────── */
 function StatCard({ label, value, sub, accent, trend }: {
   label: string; value: string | number; sub?: string; accent?: string
@@ -82,6 +94,7 @@ function StatCard({ label, value, sub, accent, trend }: {
 
 /* ── CallDetailModal ─────────────────────────────────────────── */
 function CallDetailModal({ call, onClose }: { call: Call; onClose: () => void }) {
+  const isMobile = useWindowWidth() < 768
   const report = (call as any).compliance_report
   type CheckItem = { label: string; passed: boolean | null }
   let checklistItems: CheckItem[] = []
@@ -101,11 +114,11 @@ function CallDetailModal({ call, onClose }: { call: Call; onClose: () => void })
   return (
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 24 }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 640, maxHeight: '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }}
+        style={{ background: '#fff', borderRadius: isMobile ? '16px 16px 0 0' : 16, width: '100%', maxWidth: isMobile ? '100%' : 640, maxHeight: isMobile ? '92vh' : '90vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }}
       >
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
@@ -248,6 +261,7 @@ function CallDetailModal({ call, onClose }: { call: Call; onClose: () => void })
 
 /* ── StatsTab ────────────────────────────────────────────────── */
 function StatsTab({ calls }: { calls: Call[] }) {
+  const isMobile = useWindowWidth() < 768
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const yesterdayStart = new Date(todayStart)
@@ -308,13 +322,13 @@ function StatsTab({ calls }: { calls: Call[] }) {
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
         <StatCard label="Gem. gespreksduur (totaal)" value={avgDuration !== null ? formatDuration(avgDuration) : '—'} sub={`over ${calls.length} gesprekken`} accent="#6366f1" />
         <StatCard label="Gesprekken vandaag" value={todayCalls.length} sub={`gisteren: ${yesterdayCalls.length}`} accent="#0ea5e9" trend={todayTrend} />
         <StatCard label="Gem. duur vandaag" value={avgDurationToday !== null ? formatDuration(avgDurationToday) : '—'} sub={todayCalls.length > 0 ? `${todayCalls.length} gesprekken` : 'geen gesprekken vandaag'} accent="#8b5cf6" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 16 }}>
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 20 }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>Meest afgekeurd per agent</p>
           <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 16px' }}>Ranking op basis van alle gesprekken</p>
@@ -433,6 +447,7 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
+  const isMobile = useWindowWidth() < 768
 
   const toggleSelect = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -546,7 +561,7 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
   return (
     <>
       {/* KPI summary bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 16, marginBottom: 24 }}>
         <StatCard label="Vandaag" value={todayCount} sub="gesprekken" accent="#6366f1" />
         <StatCard label="Goedgekeurd" value={pct(goedgekeurd)} sub={`${goedgekeurd} van ${total}`} accent="#16a34a" />
         <StatCard label="Risico"       value={pct(risico)}      sub={`${risico} van ${total}`}      accent="#c2410c" />
@@ -631,6 +646,41 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
               </div>
             ) : (
               <>
+                {isMobile ? (
+                  /* ── Mobile card list ── */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {paginated.map((call) => {
+                      const isSelected = selectedIds.has(call.id)
+                      return (
+                        <div
+                          key={call.id}
+                          onClick={selectMode ? (e) => toggleSelect(call.id, e as React.MouseEvent) : () => setSelectedCall(call)}
+                          style={{
+                            background: '#fff',
+                            border: `1px solid ${isSelected ? '#2563eb' : '#e5e7eb'}`,
+                            borderRadius: 10, padding: '12px 14px', cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              {selectMode && <input type="checkbox" readOnly checked={isSelected} style={{ width: 15, height: 15 }} />}
+                              <RiskBadge level={call.risk_level} />
+                            </div>
+                            <span style={{ fontSize: 11, color: '#9ca3af', fontFamily: 'monospace' }}>{formatTimestamp(call.timestamp)}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 16, marginBottom: 5, alignItems: 'center' }}>
+                            <span style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>{(call as any).agent_id ?? '—'}</span>
+                            <span style={{ fontSize: 12, color: '#9ca3af' }}>{formatDuration(call.duration)}</span>
+                          </div>
+                          <p style={{ fontSize: 12, color: '#6b7280', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {(call as any).compliance_report?.samenvatting ?? call.summary ?? '—'}
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                /* ── Desktop table ── */
                 <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
@@ -702,6 +752,7 @@ export default function RealtimeCalls({ initial, filterRisk }: { initial: Call[]
                     </tbody>
                   </table>
                 </div>
+                )} {/* end isMobile */}
                 {hasMore && (
                   <div style={{ textAlign: 'center', marginTop: 16 }}>
                     <button onClick={() => setPage(p => p + 1)}

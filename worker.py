@@ -82,50 +82,23 @@ def _move(src: Path, dst_dir: Path) -> Path:
 
 def _recover_stuck_files() -> None:
     """
-    On server startup, any file left in processing/ was mid-transcription
-    when the process crashed. Move them back to pending/ so they are retried.
-    Note: queue items for these files must be re-queued separately — we add
-    synthetic queue entries here so they flow through the normal pipeline.
+    On server startup, clean up all leftover files from previous run.
+    Files in uploads/, pending/ and processing/ are deleted — they are old
+    uploads from a previous session and should not be reprocessed on restart.
     """
-    stuck = list(PROCESSING_DIR.glob("*.wav"))
-    if not stuck:
-        return
-
-    logger.warning("Startup recovery: %d file(s) stuck in processing/ — re-queuing", len(stuck))
-    for wav in stuck:
-        # Read sidecar JSON for original metadata + retry count
-        json_path = wav.with_suffix('.json')
-        meta: dict = {}
-        if json_path.exists():
-            try:
-                meta = json.loads(json_path.read_text(encoding='utf-8'))
-            except Exception:
-                pass
-
-        retries = meta.get('retries', 0) + 1
-        if retries > MAX_RETRIES:
-            logger.error("Recovery: %s exceeded max retries (%d) — moving to failed/", wav.name, MAX_RETRIES)
-            _move(wav, FAILED_DIR)
-            json_path.unlink(missing_ok=True)
-            continue
-
-        # Update retry count in sidecar
-        meta['retries'] = retries
-        if json_path.exists():
-            try:
-                json_path.write_text(json.dumps(meta), encoding='utf-8')
-            except Exception:
-                pass
-
-        recovered = _move(wav, PENDING_DIR)
-        _queue().put({
-            "wav_path": str(recovered),
-            "agent_id": meta.get('agent_id', 'recovered'),
-            "duration": meta.get('duration', 0.0),
-            "timestamp": meta.get('timestamp', wav.stem),
-            "retries": retries,
-        })
-        logger.info("Re-queued recovered file (attempt %d/%d): %s", retries, MAX_RETRIES, recovered.name)
+    for folder, label in (
+        (UPLOADS_DIR, "uploads"),
+        (PENDING_DIR, "pending"),
+        (PROCESSING_DIR, "processing"),
+    ):
+        leftover = [f for f in folder.iterdir() if f.is_file()]
+        if leftover:
+            logger.warning("Startup cleanup: verwijder %d oud(e) bestanden uit %s/", len(leftover), label)
+            for f in leftover:
+                try:
+                    f.unlink()
+                except Exception:
+                    pass
 
 
 # ── Pipeline ───────────────────────────────────────────────────────────────────
